@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 
 import it.polito.tdp.corsi.model.Corso;
 import it.polito.tdp.corsi.model.Model;
+import it.polito.tdp.corsi.model.Studente;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -78,8 +79,29 @@ public class FXMLController {
     	
     	List<Corso> corsi = this.model.getCorsiByPeriodo(periodo);
     	
+    	/* non mi piace come stampa
     	for (Corso c : corsi)
     		this.txtRisultato.appendText(c.toString()+"\n");
+    	*/
+    	
+    	// implementiamo string builder per formattare la stampa, ci crea la stringa
+    	StringBuilder sb = new StringBuilder();
+    	
+    	// necessario perche sia davvero allineato e formattato
+    	this.txtRisultato.setStyle("-fx-font-family: monospace");
+    	
+    	for (Corso c : corsi) {
+    		// TUTTE QUESTE INFO LE METTE SULLA STESSA RIGA!
+    		// %creiamo un place holder = una colonna di 8 caratteri, - = allineati a sinistra, s = di stringhe, +SPAZIO
+    		sb.append(String.format("%-8s ", c.getCodins()));
+    		// d = digit, al massimo 4 caratteri.. sempre SPAZIO per separare elementi
+    		sb.append(String.format("%-4d ", c.getCrediti()));
+    		sb.append(String.format("%-50s ", c.getNome()));
+    		// aggiungere a capo dopo ultimo elemento della riga
+    		sb.append(String.format("%-4d\n", c.getPd()));
+    	}
+    	
+    	this.txtRisultato.appendText(sb.toString());
     }
 
     @FXML
@@ -111,22 +133,106 @@ public class FXMLController {
     	
     	Map<Corso,Integer> corsi = this.model.getTotIscrittiCorsiByPeriodo(periodo);
     	
+    	/*
     	for (Corso c : corsi.keySet()) {
     		this.txtRisultato.appendText(c.toString());
     		Integer n = corsi.get(c);
     		this.txtRisultato.appendText("\t"+ n + "\n");
     	}
-    				
+    	*/	
+    	
+    	//modifichiamo stampa
+    	StringBuilder sb = new StringBuilder();
+    	
+    	this.txtRisultato.setStyle("-fx-font-family: monospace");
+    	
+    	for(Corso c : corsi.keySet()) 
+    		sb.append(String.format("%-50s %4d\n", c.getNome(), corsi.get(c)));
+
+    	txtRisultato.appendText(sb.toString());
+    	
+    	
     }
 
     @FXML
     void stampaDivisione(ActionEvent event) {
-
+    	
+    	txtRisultato.clear();
+    	
+    	String codice = txtCorso.getText();
+    	
+    	if (codice.isEmpty()) {
+    		txtRisultato.appendText("Inserire il codice di un corso");
+    		return;
+    	}
+    	
+    	// ----> AGGIUNGIAMO CONTROLLO VERIFICA SE CODICE INSERITO ESISTE
+    	if(!model.esisteCorso(codice)) {
+    		txtRisultato.appendText("Il corso non esiste");
+    		return;
+    	}
+    	
+    	Map<String,Integer> divisione = model.getDivisioneCDS(codice);
+    	
+    	/* miglioriamo stampa
+    	for(String cds : divisione.keySet()) {
+    		
+    		txtRisultato.appendText(cds + " " + divisione.get(cds) + "\n");
+    	}
+    	*/
+    	
+    	for(String cds : divisione.keySet())
+    		
+    		txtRisultato.appendText(String.format("%-8s %4d\n", cds,divisione.get(cds)));
     }
 
     @FXML
     void stampaStudenti(ActionEvent event) {
-
+    	
+    	txtRisultato.clear();
+    	
+    	String codice = txtCorso.getText();
+    	
+    	if (codice.isEmpty()) {
+    		txtRisultato.appendText("Inserire il codice di un corso");
+    		return;
+    	}
+    	
+    	// ----> AGGIUNGIAMO CONTROLLO VERIFICA SE CODICE INSERITO ESISTE
+    	if(!model.esisteCorso(codice)) {
+    		txtRisultato.appendText("Il corso non esiste");
+    		return;
+    	}
+    	
+    	List<Studente> studenti = model.getStudentiByCorso(codice);
+    	
+    	// IN QUESTO MODO NON POSSIAMO DISTINGUERE SE NON CI SONO STUDENTI PERCHE' IL CORSO E' NUOVO OPPURE SE PERCHE'
+    	// IL CODICE NON ESISTE
+    	if(studenti.size()==0) {
+    		txtRisultato.appendText("Il corso non ha iscritti");
+    		return;
+    	}
+    	
+    	/* miglioriamo stampa
+    	for(Studente s : studenti) {
+    		txtRisultato.appendText(s + "\n");
+    	}
+    	*/
+    	
+    	StringBuilder sb = new StringBuilder();
+    	
+    	// necessario perche sia davvero allineato e formattato
+    	this.txtRisultato.setStyle("-fx-font-family: monospace");
+    	
+    	for (Studente s : studenti) {
+    		// TUTTE QUESTE INFO LE METTE SULLA STESSA RIGA!
+    		sb.append(String.format("%-10d ", s.getMatricola()));
+    		sb.append(String.format("%-50s ", s.getCognome()));
+    		sb.append(String.format("%-40s ", s.getNome()));
+    		sb.append(String.format("%-10s\n", s.getcDS()));
+    	}
+    	
+    	this.txtRisultato.appendText(sb.toString());
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -143,6 +249,7 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.txtRisultato.setStyle("-fx-font-family: monospace");
     }
     
     
